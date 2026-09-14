@@ -1,0 +1,7 @@
+.filters { align-items: end; display: grid; gap: .75rem; grid-template-columns: 1.6fr repeat(6, minmax(110px, 1fr)) auto; }
+.filters label { display: grid; gap: .35rem; }
+.filters label span { color: var(--muted); font-size: .72rem; font-weight: 800; letter-spacing: .035em; text-transform: uppercase; }
+.filter-actions { display: flex; gap: .5rem; }
+@media (max-width: 1250px) { .filters { grid-template-columns: repeat(4, 1fr); } .search-field { grid-column: span 2; } }
+@media (max-width: 720px) { .filters { grid-template-columns: 1fr 1fr; } .search-field, .filter-actions { grid-column: 1 / -1; } .filter-actions .button { flex: 1; } }
+@media (max-width: 440px) { .filters { grid-template-columns: 1fr; } .search-field, .filter-actions { grid-column: auto; } }

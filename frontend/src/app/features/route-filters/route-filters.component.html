@@ -1,0 +1,46 @@
+<form class="filters" (ngSubmit)="apply()" aria-label="Filtros de rutas">
+  <label class="search-field">
+    <span>Buscar</span>
+    <input [(ngModel)]="model.search" name="search" placeholder="Origen, destino o dirección" />
+  </label>
+  <label>
+    <span>Estado</span>
+    <select [(ngModel)]="model.status" name="status">
+      <option value="">Todos</option>
+      <option value="PENDING">Pendiente</option>
+      <option value="READY">Lista</option>
+      <option value="EXECUTED">Ejecutada</option>
+      <option value="FAILED">Fallida</option>
+    </select>
+  </label>
+  <label>
+    <span>Prioridad ID</span>
+    <input [(ngModel)]="model.priority" name="priority" inputmode="numeric" placeholder="Ej. 1" />
+  </label>
+  <label>
+    <span>Oficina ID</span>
+    <input [(ngModel)]="model.originOffice" name="originOffice" inputmode="numeric" placeholder="Ej. 10" />
+  </label>
+  <label>
+    <span>Desde</span>
+    <input [(ngModel)]="model.registeredFrom" name="registeredFrom" type="date" />
+  </label>
+  <label>
+    <span>Hasta</span>
+    <input [(ngModel)]="model.registeredTo" name="registeredTo" type="date" />
+  </label>
+  <label>
+    <span>Ordenar por</span>
+    <select [(ngModel)]="model.ordering" name="ordering">
+      <option value="-created_at">Más recientes</option>
+      <option value="created_at">Más antiguas</option>
+      <option value="distance_km">Menor distancia</option>
+      <option value="-distance_km">Mayor distancia</option>
+      <option value="priority">Prioridad ascendente</option>
+    </select>
+  </label>
+  <div class="filter-actions">
+    <button class="button ghost" type="button" (click)="clear()">Limpiar</button>
+    <button class="button primary" type="submit">Aplicar filtros</button>
+  </div>
+</form>

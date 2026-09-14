@@ -1,0 +1,570 @@
+{
+  "info": {
+    "_postman_id": "99745f3d-f0ec-4b30-9e56-611a9d9d9c98",
+    "name": "Prueba Técnica - API de Rutas",
+    "description": "Colección ejecutable para validar salud, importación, consultas, creación, ejecución y logs. Ejecutar las carpetas en el orden indicado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Salud",
+      "item": [
+        {
+          "name": "Servicio disponible",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Retorna el contrato de salud', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.status).to.eql('ok');",
+                  "  pm.expect(body.service).to.eql('routes-api');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/health/",
+              "host": ["{{base_url}}"],
+              "path": ["health", ""]
+            },
+            "description": "Comprueba que Django responde antes de ejecutar el resto de la colección."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 - Importación",
+      "item": [
+        {
+          "name": "Importar dataset válido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Importación aceptada', () => pm.response.to.have.status(201));",
+                  "pm.test('Retorna el resumen esperado', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.all.keys('batch_id', 'status', 'total_rows', 'imported', 'rejected', 'error_count', 'errors', 'has_more_errors');",
+                  "  pm.expect(body.total_rows).to.eql(body.imported + body.rejected);",
+                  "  pm.expect(body.total_rows).to.eql(5000);",
+                  "  pm.collectionVariables.set('batch_id', body.batch_id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "data/dataset.xlsx"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/import/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "import", ""]
+            },
+            "description": "Carga el workbook suministrado. Si Postman no resuelve la ruta relativa, seleccionar manualmente data/dataset.xlsx."
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar extensión no permitida",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza el archivo con 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Explica el problema de extensión', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.file).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(body.file[0].toLowerCase()).to.include('.xlsx');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "postman/fixtures/archivo-invalido.txt"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/import/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "import", ""]
+            },
+            "description": "Caso negativo para validar la restricción de extensión."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Consulta de rutas",
+      "item": [
+        {
+          "name": "Listar rutas y capturar catálogos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Listado paginado disponible', () => pm.response.to.have.status(200));",
+                  "pm.test('Captura referencias para crear una ruta', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.count).to.be.a('number');",
+                  "  pm.expect(body.results).to.be.an('array').that.is.not.empty;",
+                  "  const route = body.results[0];",
+                  "  pm.expect(route.payload).to.be.an('object');",
+                  "  pm.collectionVariables.set('office_id', route.origin_office);",
+                  "  pm.collectionVariables.set('priority_id', route.priority);",
+                  "  pm.collectionVariables.set('point_id', route.payload.point);",
+                  "  pm.collectionVariables.set('payload_address', route.payload.address);",
+                  "  pm.collectionVariables.set('payload_latitude', route.payload.latitude);",
+                  "  pm.collectionVariables.set('payload_longitude', route.payload.longitude);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/routes/?page=1&page_size=25&ordering=-created_at",
+              "host": ["{{base_url}}"],
+              "path": ["routes", ""],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "25" },
+                { "key": "ordering", "value": "-created_at" }
+              ]
+            },
+            "description": "Además de validar la paginación, captura IDs existentes para los siguientes casos."
+          },
+          "response": []
+        },
+        {
+          "name": "Filtrar rutas listas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Filtro aceptado', () => pm.response.to.have.status(200));",
+                  "pm.test('Todas las filas cumplen el estado', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.results).to.be.an('array');",
+                  "  body.results.forEach(route => pm.expect(route.status).to.eql('READY'));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/routes/?status=READY&priority={{priority_id}}&origin_office={{office_id}}&page_size=10",
+              "host": ["{{base_url}}"],
+              "path": ["routes", ""],
+              "query": [
+                { "key": "status", "value": "READY" },
+                { "key": "priority", "value": "{{priority_id}}" },
+                { "key": "origin_office", "value": "{{office_id}}" },
+                { "key": "page_size", "value": "10" }
+              ]
+            },
+            "description": "Valida filtros combinados por estado, prioridad y oficina."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Creación individual",
+      "item": [
+        {
+          "name": "Crear ruta READY válida",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "['office_id', 'priority_id', 'point_id', 'payload_address', 'payload_latitude', 'payload_longitude'].forEach(name => {",
+                  "  if (!pm.collectionVariables.get(name)) throw new Error(`Falta ${name}. Ejecuta primero 'Listar rutas y capturar catálogos'.`);",
+                  "});",
+                  "const now = new Date();",
+                  "pm.collectionVariables.set('unique_suffix', String(Date.now()));",
+                  "pm.collectionVariables.set('registered_at', now.toISOString());",
+                  "pm.collectionVariables.set('window_start', new Date(now.getTime() + 3600000).toISOString());",
+                  "pm.collectionVariables.set('window_end', new Date(now.getTime() + 10800000).toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Ruta creada', () => pm.response.to.have.status(201));",
+                  "pm.test('Crea ruta READY con payload', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.be.a('number');",
+                  "  pm.expect(body.status).to.eql('READY');",
+                  "  pm.expect(body.payload.point).to.eql(Number(pm.collectionVariables.get('point_id')));",
+                  "  pm.collectionVariables.set('route_id', body.id);",
+                  "  pm.collectionVariables.set('ready_route_id', body.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin_office\": {{office_id}},\n  \"registered_at\": \"{{registered_at}}\",\n  \"origin\": \"Centro Postman {{unique_suffix}}\",\n  \"destination\": \"Cliente Postman {{unique_suffix}}\",\n  \"distance_km\": \"18.40\",\n  \"priority\": {{priority_id}},\n  \"time_window_start\": \"{{window_start}}\",\n  \"time_window_end\": \"{{window_end}}\",\n  \"status\": \"READY\",\n  \"payload\": {\n    \"point\": {{point_id}},\n    \"address\": \"{{payload_address}}\",\n    \"latitude\": \"{{payload_latitude}}\",\n    \"longitude\": \"{{payload_longitude}}\",\n    \"first_piece_weight\": \"8.25\",\n    \"raw_payload\": {\"source\": \"postman\", \"run\": \"{{unique_suffix}}\"}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", ""]
+            },
+            "description": "Crea una clave de negocio única y conserva el ID para detalle y ejecución."
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar ventana de tiempo inválida",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const instant = new Date(Date.now() + 7200000).toISOString();",
+                  "pm.collectionVariables.set('invalid_suffix', String(Date.now()));",
+                  "pm.collectionVariables.set('invalid_window', instant);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza la ruta con 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Identifica la ventana inválida', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body).to.have.property('time_window_end');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"origin_office\": {{office_id}},\n  \"origin\": \"Origen inválido {{invalid_suffix}}\",\n  \"destination\": \"Destino inválido {{invalid_suffix}}\",\n  \"distance_km\": \"5.00\",\n  \"priority\": {{priority_id}},\n  \"time_window_start\": \"{{invalid_window}}\",\n  \"time_window_end\": \"{{invalid_window}}\",\n  \"status\": \"READY\",\n  \"payload\": {\n    \"point\": {{point_id}},\n    \"address\": \"{{payload_address}}\",\n    \"latitude\": \"{{payload_latitude}}\",\n    \"longitude\": \"{{payload_longitude}}\",\n    \"raw_payload\": {\"source\": \"postman-negative\"}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", ""]
+            },
+            "description": "Caso negativo: inicio y fin son iguales."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Detalle",
+      "item": [
+        {
+          "name": "Consultar ruta creada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Detalle disponible', () => pm.response.to.have.status(200));",
+                  "pm.test('Corresponde a la ruta encadenada', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.id).to.eql(Number(pm.collectionVariables.get('route_id')));",
+                  "  pm.expect(body.payload).to.have.all.keys('point', 'point_city', 'address', 'latitude', 'longitude', 'first_piece_weight', 'raw_payload');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/routes/{{route_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "{{route_id}}", ""]
+            },
+            "description": "Consulta el detalle y payload de la ruta creada en el paso anterior."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Ejecución",
+      "item": [
+        {
+          "name": "Ejecutar ruta READY",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Solicitud procesada', () => pm.response.to.have.status(200));",
+                  "pm.test('Ejecuta exactamente una ruta', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.requested).to.eql(1);",
+                  "  pm.expect(body.executed).to.eql(1);",
+                  "  pm.expect(body.failed).to.eql(0);",
+                  "  pm.expect(body.results[0].result).to.eql('SUCCESS');",
+                  "  pm.expect(body.results[0].status).to.eql('EXECUTED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_ids\": [{{ready_route_id}}]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/execute/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "execute", ""]
+            },
+            "description": "Transición válida READY → EXECUTED y creación de log SUCCESS."
+          },
+          "response": []
+        },
+        {
+          "name": "Reintentar ruta ya ejecutada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Solicitud procesada', () => pm.response.to.have.status(200));",
+                  "pm.test('Conserva estado y registra error', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.executed).to.eql(0);",
+                  "  pm.expect(body.failed).to.eql(1);",
+                  "  pm.expect(body.results[0].result).to.eql('ERROR');",
+                  "  pm.expect(body.results[0].status).to.eql('EXECUTED');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_ids\": [{{ready_route_id}}]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/execute/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "execute", ""]
+            },
+            "description": "Segundo intento sobre la misma ruta; debe generar log ERROR sin cambiar el estado."
+          },
+          "response": []
+        },
+        {
+          "name": "Reportar ruta inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Solicitud procesada', () => pm.response.to.have.status(200));",
+                  "pm.test('Reporta NOT_FOUND sin log huérfano', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.executed).to.eql(0);",
+                  "  pm.expect(body.failed).to.eql(1);",
+                  "  pm.expect(body.results[0].result).to.eql('NOT_FOUND');",
+                  "  pm.expect(body.results[0].status).to.eql(null);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_ids\": [{{missing_route_id}}]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/execute/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "execute", ""]
+            },
+            "description": "El ID configurado es deliberadamente alto para representar una ruta inexistente."
+          },
+          "response": []
+        },
+        {
+          "name": "Rechazar IDs duplicados",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Rechaza la lista con 400', () => pm.response.to.have.status(400));",
+                  "pm.test('Explica la duplicidad', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.route_ids).to.be.an('array').that.is.not.empty;",
+                  "  pm.expect(body.route_ids[0].toLowerCase()).to.include('repetirse');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_ids\": [{{route_id}}, {{route_id}}]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/routes/execute/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "execute", ""]
+            },
+            "description": "Valida que una solicitud no pueda repetir identificadores."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - Logs",
+      "item": [
+        {
+          "name": "Consultar logs de la ruta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Logs disponibles', () => pm.response.to.have.status(200));",
+                  "pm.test('Contiene los intentos exitoso y fallido', () => {",
+                  "  const body = pm.response.json();",
+                  "  pm.expect(body.count).to.be.at.least(2);",
+                  "  const results = body.results.map(log => log.result);",
+                  "  pm.expect(results).to.include('SUCCESS');",
+                  "  pm.expect(results).to.include('ERROR');",
+                  "  body.results.forEach(log => pm.expect(log.route).to.eql(Number(pm.collectionVariables.get('route_id'))));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/routes/{{route_id}}/logs/",
+              "host": ["{{base_url}}"],
+              "path": ["routes", "{{route_id}}", "logs", ""]
+            },
+            "description": "Comprueba la trazabilidad de los dos intentos de ejecución."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1", "type": "string" },
+    { "key": "batch_id", "value": "", "type": "string" },
+    { "key": "office_id", "value": "", "type": "string" },
+    { "key": "priority_id", "value": "", "type": "string" },
+    { "key": "point_id", "value": "", "type": "string" },
+    { "key": "payload_address", "value": "", "type": "string" },
+    { "key": "payload_latitude", "value": "", "type": "string" },
+    { "key": "payload_longitude", "value": "", "type": "string" },
+    { "key": "route_id", "value": "", "type": "string" },
+    { "key": "ready_route_id", "value": "", "type": "string" },
+    { "key": "missing_route_id", "value": "999999999", "type": "string" }
+  ]
+}

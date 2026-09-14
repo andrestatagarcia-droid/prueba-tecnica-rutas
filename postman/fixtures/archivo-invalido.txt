@@ -1,0 +1,1 @@
+Este archivo existe para comprobar que la API rechaza extensiones diferentes de .xlsx.

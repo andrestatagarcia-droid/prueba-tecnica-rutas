@@ -1,0 +1,24 @@
+.topbar { align-items: center; background: #071a36; color: white; display: flex; height: 64px; justify-content: space-between; padding: 0 max(1.25rem, calc((100vw - 1440px) / 2)); }
+.brand { align-items: center; display: flex; gap: .7rem; }
+.brand-mark { align-items: center; background: var(--blue); border-radius: 10px; display: inline-flex; font-size: 1.1rem; font-weight: 900; height: 36px; justify-content: center; width: 36px; }
+.brand div { display: grid; }
+.brand strong { letter-spacing: -.02em; }
+.brand small { color: #91a5c3; font-size: .65rem; letter-spacing: .06em; text-transform: uppercase; }
+.environment { align-items: center; color: #b7c6db; display: flex; font-size: .75rem; gap: .4rem; }
+.environment span { background: #4bd393; border-radius: 50%; box-shadow: 0 0 0 4px rgb(75 211 147 / 12%); height: 7px; width: 7px; }
+main { margin: 0 auto; max-width: 1440px; padding: 2rem 1.25rem 3rem; }
+.hero { align-items: end; display: flex; justify-content: space-between; margin-bottom: 1.4rem; }
+.hero h1 { font-size: clamp(1.7rem, 3vw, 2.35rem); letter-spacing: -.045em; margin: .15rem 0 .25rem; }
+.hero p:not(.eyebrow) { color: var(--muted); margin: 0; }
+.button.execute { background: #0a2449; box-shadow: 0 8px 22px rgb(10 36 73 / 18%); color: white; }
+.execute b { align-items: center; background: white; border-radius: 999px; color: #0a2449; display: inline-flex; font-size: .7rem; height: 21px; justify-content: center; min-width: 21px; padding: 0 .35rem; }
+.page-alert { align-items: center; display: flex; justify-content: space-between; margin-bottom: 1rem; }
+.page-alert button, .execution-result > button { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 1.25rem; }
+.execution-result { align-items: center; background: #e8f7ef; border: 1px solid #b8e5cd; border-radius: 12px; color: #105e3b; display: grid; gap: .75rem; grid-template-columns: auto 1fr auto; margin-bottom: 1rem; padding: .8rem 1rem; }
+.result-icon { align-items: center; background: #188653; border-radius: 50%; color: white; display: flex; height: 32px; justify-content: center; width: 32px; }
+.execution-result p { font-size: .8rem; margin: .15rem 0 0; }
+.routes-section { margin-top: 1.6rem; }
+.routes-heading { margin-bottom: .8rem; }
+.route-count { background: var(--blue-soft); border-radius: 999px; color: var(--blue); font-size: .72rem; font-weight: 800; padding: .4rem .7rem; }
+.filters-card { margin-bottom: .85rem; padding: 1rem; }
+@media (max-width: 650px) { .hero { align-items: stretch; flex-direction: column; gap: 1rem; } .hero .button { justify-content: center; } main { padding-top: 1.4rem; } }

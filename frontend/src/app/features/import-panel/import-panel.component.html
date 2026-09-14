@@ -1,0 +1,66 @@
+<section class="card import-card" aria-labelledby="import-title">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Carga de datos</p>
+      <h2 id="import-title">Importar workbook</h2>
+    </div>
+    <span class="file-rule">XLSX · máximo 15 MB</span>
+  </div>
+
+  <div class="upload-row">
+    <label class="file-picker">
+      <span class="file-icon" aria-hidden="true">↥</span>
+      <span>
+        <strong>{{ file()?.name ?? 'Seleccionar dataset' }}</strong>
+        <small>{{ file() ? 'Archivo listo para validar' : 'Incluye las seis hojas requeridas' }}</small>
+      </span>
+      <input type="file" accept=".xlsx" (change)="selectFile($event)" />
+    </label>
+    <button class="button primary" type="button" [disabled]="!file() || loading()" (click)="upload()">
+      {{ loading() ? 'Procesando…' : 'Importar y validar' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="alert error" role="alert">{{ error() }}</p>
+  }
+
+  @if (summary(); as result) {
+    <div class="import-result" aria-live="polite">
+      <div class="metric">
+        <span>Total</span>
+        <strong>{{ result.total_rows }}</strong>
+      </div>
+      <div class="metric success">
+        <span>Importadas</span>
+        <strong>{{ result.imported }}</strong>
+      </div>
+      <div class="metric rejected">
+        <span>Rechazadas</span>
+        <strong>{{ result.rejected }}</strong>
+      </div>
+      <div class="metric">
+        <span>Errores</span>
+        <strong>{{ result.error_count }}</strong>
+      </div>
+    </div>
+
+    @if (result.errors.length) {
+      <details class="issue-list">
+        <summary>Ver primeros {{ result.errors.length }} errores</summary>
+        <div class="issue-scroll">
+          @for (issue of result.errors; track $index) {
+            <div class="issue">
+              <span>Fila {{ issue.row }}</span>
+              <strong>{{ issue.code }}</strong>
+              <p>{{ issue.message }}</p>
+            </div>
+          }
+        </div>
+        @if (result.has_more_errors) {
+          <p class="more-note">El reporte completo permanece almacenado en el lote {{ result.batch_id }}.</p>
+        }
+      </details>
+    }
+  }
+</section>

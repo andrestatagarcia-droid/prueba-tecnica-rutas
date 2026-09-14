@@ -1,0 +1,83 @@
+<div class="table-shell" [class.is-loading]="loading">
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th class="check-cell">
+            <input
+              type="checkbox"
+              aria-label="Seleccionar rutas listas de esta página"
+              [checked]="allReadySelected"
+              [disabled]="readyRoutes.length === 0"
+              (change)="toggleCurrentPage()"
+            />
+          </th>
+          <th>Ruta</th>
+          <th>Trayecto</th>
+          <th>Oficina</th>
+          <th>Prioridad</th>
+          <th>Distancia</th>
+          <th>Ventana</th>
+          <th>Estado</th>
+          <th><span class="sr-only">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (route of routes; track route.id) {
+          <tr [class.selected]="selectedIds.has(route.id)">
+            <td class="check-cell">
+              <input
+                type="checkbox"
+                [attr.aria-label]="'Seleccionar ruta ' + route.id"
+                [checked]="selectedIds.has(route.id)"
+                [disabled]="route.status !== 'READY'"
+                (change)="routeToggle.emit(route.id)"
+              />
+            </td>
+            <td>
+              <strong>#{{ route.id }}</strong>
+              @if (route.source_id) { <small>Origen {{ route.source_id }}</small> }
+            </td>
+            <td class="route-cell">
+              <strong>{{ route.origin }}</strong>
+              <span aria-hidden="true">→</span>
+              <small>{{ route.destination }}</small>
+            </td>
+            <td>
+              <strong>{{ route.origin_office_name }}</strong>
+              <small>ID {{ route.origin_office }}</small>
+            </td>
+            <td>
+              <strong>{{ route.priority_name }}</strong>
+              <small>ID {{ route.priority }}</small>
+            </td>
+            <td class="numeric">{{ route.distance_km | number: '1.1-2' }} km</td>
+            <td>
+              <strong>{{ route.time_window_start | date: 'dd/MM/yyyy HH:mm' }}</strong>
+              <small>hasta {{ route.time_window_end | date: 'HH:mm' }}</small>
+            </td>
+            <td><span class="status" [class]="'status ' + route.status.toLowerCase()">{{ statusLabel(route.status) }}</span></td>
+            <td><button class="icon-button" type="button" (click)="detail.emit(route.id)">Ver</button></td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="empty-state" colspan="9">
+              <span aria-hidden="true">⌁</span>
+              <strong>No hay rutas para mostrar</strong>
+              <small>Ajusta los filtros o importa un workbook.</small>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <footer class="pagination">
+    <span>Mostrando {{ firstRow }}–{{ lastRow }} de {{ total }}</span>
+    <div>
+      <button class="icon-button" type="button" [disabled]="page <= 1 || loading" (click)="pageChange.emit(page - 1)">Anterior</button>
+      <span>Página {{ page }} de {{ totalPages }}</span>
+      <button class="icon-button" type="button" [disabled]="page >= totalPages || loading" (click)="pageChange.emit(page + 1)">Siguiente</button>
+    </div>
+  </footer>
+</div>

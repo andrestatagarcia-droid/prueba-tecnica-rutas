@@ -1,0 +1,54 @@
+<div class="drawer-backdrop" (click)="closed.emit()" aria-hidden="true"></div>
+<aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+  <header>
+    <div>
+      <p class="eyebrow">Detalle operacional</p>
+      <h2 id="detail-title">{{ route ? 'Ruta #' + route.id : 'Cargando ruta' }}</h2>
+    </div>
+    <button class="close-button" type="button" aria-label="Cerrar detalle" (click)="closed.emit()">×</button>
+  </header>
+
+  @if (loading) {
+    <div class="drawer-loading" aria-live="polite">Consultando información…</div>
+  } @else if (route; as item) {
+    <div class="drawer-content">
+      <section class="route-summary">
+        <span class="status" [class]="'status ' + item.status.toLowerCase()">{{ item.status }}</span>
+        <h3>{{ item.origin }} <span>→</span> {{ item.destination }}</h3>
+        <p>{{ item.distance_km | number: '1.1-2' }} km · {{ item.priority_name }}</p>
+      </section>
+
+      <section>
+        <h3>Planificación</h3>
+        <dl class="data-grid">
+          <div><dt>Oficina</dt><dd>{{ item.origin_office_name }} (#{{ item.origin_office }})</dd></div>
+          <div><dt>Registro</dt><dd>{{ item.registered_at | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>Inicio</dt><dd>{{ item.time_window_start | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+          <div><dt>Fin</dt><dd>{{ item.time_window_end | date: 'dd/MM/yyyy HH:mm' }}</dd></div>
+        </dl>
+      </section>
+
+      <section>
+        <h3>Destino geográfico</h3>
+        <dl class="data-grid">
+          <div class="wide"><dt>Dirección</dt><dd>{{ item.payload.address }}</dd></div>
+          <div><dt>Punto</dt><dd>#{{ item.payload.point }} · {{ item.payload.point_city }}</dd></div>
+          <div><dt>Coordenadas</dt><dd>{{ item.payload.latitude }}, {{ item.payload.longitude }}</dd></div>
+          <div><dt>Primera pieza</dt><dd>{{ item.payload.first_piece_weight ? item.payload.first_piece_weight + ' kg' : 'Sin dato' }}</dd></div>
+        </dl>
+      </section>
+
+      <section>
+        <h3>Historial de ejecución</h3>
+        @for (log of logs; track log.id) {
+          <article class="log-entry">
+            <span [class.success]="log.result === 'SUCCESS'">{{ log.result }}</span>
+            <div><strong>{{ log.execution_time | date: 'dd/MM/yyyy HH:mm:ss' }}</strong><p>{{ log.message }}</p></div>
+          </article>
+        } @empty {
+          <p class="empty-copy">Esta ruta aún no tiene intentos de ejecución.</p>
+        }
+      </section>
+    </div>
+  }
+</aside>

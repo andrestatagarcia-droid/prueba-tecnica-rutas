@@ -1,0 +1,83 @@
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">R</span>
+    <div><strong>RouteOps</strong><small>Control logístico</small></div>
+  </div>
+  <div class="environment"><span></span> API local</div>
+</header>
+
+<main>
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Centro de operaciones</p>
+      <h1>Gestión de rutas</h1>
+      <p>Importa, valida y ejecuta recorridos desde un único panel.</p>
+    </div>
+    <button
+      class="button execute"
+      type="button"
+      [disabled]="selectedCount() === 0 || executing()"
+      (click)="executeSelection()"
+    >
+      <span aria-hidden="true">▶</span>
+      {{ executing() ? 'Ejecutando…' : 'Ejecutar seleccionadas' }}
+      @if (selectedCount()) { <b>{{ selectedCount() }}</b> }
+    </button>
+  </section>
+
+  @if (error()) {
+    <div class="alert error page-alert" role="alert">
+      <span>{{ error() }}</span>
+      <button type="button" aria-label="Cerrar mensaje" (click)="error.set('')">×</button>
+    </div>
+  }
+
+  @if (executionSummary(); as summary) {
+    <section class="execution-result" aria-live="polite">
+      <div class="result-icon">✓</div>
+      <div>
+        <strong>Ejecución procesada</strong>
+        <p>{{ summary.executed }} exitosas · {{ summary.failed }} no ejecutadas · {{ summary.requested }} solicitadas</p>
+      </div>
+      <button type="button" aria-label="Cerrar resumen" (click)="dismissExecutionSummary()">×</button>
+    </section>
+  }
+
+  <app-import-panel (imported)="refreshAfterImport()" />
+
+  <section class="routes-section" aria-labelledby="routes-title">
+    <div class="section-heading routes-heading">
+      <div>
+        <p class="eyebrow">Operación</p>
+        <h2 id="routes-title">Rutas registradas</h2>
+      </div>
+      <span class="route-count">{{ total() }} registros</span>
+    </div>
+
+    <div class="card filters-card">
+      <app-route-filters (filtersChange)="applyFilters($event)" />
+    </div>
+
+    <app-route-table
+      [routes]="routes()"
+      [selectedIds]="selectedIds()"
+      [loading]="loading()"
+      [total]="total()"
+      [page]="filters().page"
+      [pageSize]="filters().pageSize"
+      (routeToggle)="toggleRoute($event)"
+      (pageToggle)="togglePageSelection($event)"
+      (detail)="openDetail($event)"
+      (pageChange)="changePage($event)"
+    />
+  </section>
+</main>
+
+@if (detailOpen()) {
+  <app-route-detail
+    [route]="detailRoute()"
+    [logs]="detailLogs()"
+    [loading]="detailLoading()"
+    (closed)="closeDetail()"
+  />
+}
